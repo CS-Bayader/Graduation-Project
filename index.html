@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Glucose Risk Analysis</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            font-family: Arial, Tahoma, sans-serif;
+            background: #f4f7f9;
+            color: #222;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: auto;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            color: #2c3e50;
+            font-size: 28px;
+        }
+
+        .description {
+            text-align: center;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ccd4da;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #3498db;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 8px;
+            background: #3498db;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        /* =========================
+           Loading
+        ========================= */
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }
+
+        /* =========================
+           Result Card
+        ========================= */
+
+        .result-card {
+            display: none;
+            margin-top: 25px;
+            padding: 22px;
+            border-radius: 12px;
+        }
+
+        .high-risk {
+            background-color: #fef5e7;
+            border-left: 6px solid #e67e22;
+            color: #7e5109;
+        }
+
+        .normal-risk {
+            background-color: #eafaf1;
+            border-left: 6px solid #27ae60;
+            color: #145a32;
+        }
+
+        .low-glucose {
+            background-color: #fdecea;
+            border-left: 6px solid #e74c3c;
+            color: #922b21;
+        }
+
+        .high-glucose {
+            background-color: #fef5e7;
+            border-left: 6px solid #e67e22;
+            color: #7e5109;
+        }
+
+        .normal-glucose {
+            background-color: #eafaf1;
+            border-left: 6px solid #27ae60;
+            color: #145a32;
+        }
+
+        #riskTitle {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+
+        .probability {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .summary {
+            font-weight: bold;
+            line-height: 1.6;
+        }
+
+        /* =========================
+           Recommendation Sections
+        ========================= */
+
+        .rec-section {
+            margin-top: 18px;
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
+
+        .rec-section h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 17px;
+        }
+
+        .rec-list {
+            margin: 0;
+            padding-left: 22px;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .rec-list li {
+            margin-bottom: 6px;
+        }
+
+        /* =========================
+           Error
+        ========================= */
+
+        #errorMessage {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #fdecea;
+            color: #922b21;
+            border-left: 5px solid #e74c3c;
+        }
+
+        /* =========================
+           Disclaimer
+        ========================= */
+
+        .disclaimer {
+            margin-top: 20px;
+            padding: 14px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            color: #666;
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>Glucose Risk Analysis</h1>
+
+        <p class="description">
+            Enter your health information below to receive a model-based
+            risk estimate and general lifestyle recommendations.
+        </p>
+
+
+        <!-- =========================
+             Input Form
+        ========================== -->
+
+        <form id="glucoseForm">
+
+            <div class="form-group">
+
+                <label for="glucose">
+                    Glucose Level (mg/dL)
+                </label>
+
+                <input
+                    type="number"
+                    id="glucose"
+                    placeholder="e.g., 120"
+                    min="1"
+                    step="0.1"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="age">
+                    Age
+                </label>
+
+                <input
+                    type="number"
+                    id="age"
+                    placeholder="e.g., 33"
+                    min="1"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="bmi">
+                    Body Mass Index (BMI)
+                </label>
+
+                <input
+                    type="number"
+                    id="bmi"
+                    placeholder="e.g., 28.5"
+                    min="1"
+                    step="0.1"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="insulin">
+                    Insulin Level
+                </label>
+
+                <input
+                    type="number"
+                    id="insulin"
+                    placeholder="e.g., 85"
+                    min="0"
+                    step="0.1"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="bp">
+                    Blood Pressure (mmHg)
+                </label>
+
+                <input
+                    type="number"
+                    id="bp"
+                    placeholder="e.g., 75"
+                    min="1"
+                    step="0.1"
+                    required
+                >
+
+            </div>
+
+
+            <button type="submit" id="analyzeButton">
+                Analyze & Predict 🚀
+            </button>
+
+        </form>
+
+
+        <!-- Loading -->
+
+        <div id="loading">
+            Analyzing your data...
+        </div>
+
+
+        <!-- Error -->
+
+        <div id="errorMessage"></div>
+
+
+        <!-- =========================
+             Results
+        ========================== -->
+
+        <div id="resultCard" class="result-card">
+
+            <h2 id="riskTitle"></h2>
+
+            <p class="probability">
+                Model Probability:
+                <span id="riskProb"></span>%
+            </p>
+
+            <p id="statusSummary" class="summary"></p>
+
+
+            <!-- Dietary Recommendations -->
+
+            <div class="rec-section">
+
+                <h4>
+                    🥗 Recommended Dietary Plan
+                </h4>
+
+                <ul
+                    id="dietList"
+                    class="rec-list">
+                </ul>
+
+            </div>
+
+
+            <!-- Exercise Recommendations -->
+
+            <div class="rec-section">
+
+                <h4>
+                    🏃 Recommended Physical Activities
+                </h4>
+
+                <ul
+                    id="exerciseList"
+                    class="rec-list">
+                </ul>
+
+            </div>
+
+        </div>
+
+
+        <div class="disclaimer">
+
+            This tool provides a model-based estimate and general
+            educational information. It is not a medical diagnosis.
+            Consult a qualified healthcare professional for medical advice.
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const form = document.getElementById("glucoseForm");
+
+    const resultCard = document.getElementById("resultCard");
+
+    const riskTitle = document.getElementById("riskTitle");
+
+    const riskProb = document.getElementById("riskProb");
+
+    const statusSummary = document.getElementById("statusSummary");
+
+    const dietList = document.getElementById("dietList");
+
+    const exerciseList = document.getElementById("exerciseList");
+
+    const loading = document.getElementById("loading");
+
+    const errorMessage = document.getElementById("errorMessage");
+
+    const analyzeButton = document.getElementById("analyzeButton");
+
+
+    // ========================================================
+    // إرسال البيانات إلى Flask
+    // ========================================================
+
+    form.addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+
+        // إخفاء النتائج السابقة
+
+        resultCard.style.display = "none";
+
+        errorMessage.style.display = "none";
+
+
+        // إظهار Loading
+
+        loading.style.display = "block";
+
+        analyzeButton.disabled = true;
+
+        analyzeButton.textContent = "Analyzing...";
+
+
+        // ====================================================
+        // قراءة القيم
+        // ====================================================
+
+        const glucose = parseFloat(
+            document.getElementById("glucose").value
+        );
+
+        const age = parseFloat(
+            document.getElementById("age").value
+        );
+
+        const bmi = parseFloat(
+            document.getElementById("bmi").value
+        );
+
+        const insulin = parseFloat(
+            document.getElementById("insulin").value
+        );
+
+        const bloodPressure = parseFloat(
+            document.getElementById("bp").value
+        );
+
+
+        // ====================================================
+        // إرسال البيانات
+        // ====================================================
+
+        try {
+
+            const response = await fetch(
+                "http://127.0.0.1:5000/predict",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        glucose: glucose,
+
+                        age: age,
+
+                        bmi: bmi,
+
+                        insulin: insulin,
+
+                        blood_pressure: bloodPressure
+
+                    })
+                }
+            );
+
+
+            const data = await response.json();
+
+
+            // =================================================
+            // معالجة الخطأ من Flask
+            // =================================================
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error || "An error occurred."
+                );
+
+            }
+
+
+            // =================================================
+            // عرض النتيجة
+            // =================================================
+
+            displayResults(data);
+
+
+        } catch (error) {
+
+            errorMessage.textContent =
+                "Error: " + error.message;
+
+            errorMessage.style.display = "block";
+
+        }
+
+
+        // ====================================================
+        // إعادة حالة الزر
+        // ====================================================
+
+        loading.style.display = "none";
+
+        analyzeButton.disabled = false;
+
+        analyzeButton.textContent =
+            "Analyze & Predict 🚀";
+
+    });
+
+
+    // ========================================================
+    // عرض النتائج
+    // ========================================================
+
+    function displayResults(data) {
+
+        resultCard.className = "result-card";
+
+
+        // ----------------------------------------------------
+        // عنوان النتيجة
+        // ----------------------------------------------------
+
+        riskTitle.textContent =
+            data.risk_title;
+
+
+        // ----------------------------------------------------
+        // الاحتمالية
+        // ----------------------------------------------------
+
+        riskProb.textContent =
+            data.risk_probability;
+
+
+        // ----------------------------------------------------
+        // التوصيات والحالة
+        // ----------------------------------------------------
+
+        statusSummary.textContent =
+            data.recommendations.status_summary;
+
+
+        // ----------------------------------------------------
+        // لون بطاقة النتيجة
+        // ----------------------------------------------------
+
+        if (data.risk_code === 1) {
+
+            resultCard.classList.add("high-risk");
+
+        } else {
+
+            resultCard.classList.add("normal-risk");
+
+        }
+
+
+        // ----------------------------------------------------
+        // إنشاء قائمة النظام الغذائي
+        // ----------------------------------------------------
+
+        dietList.innerHTML = "";
+
+        data.recommendations.diet.forEach(
+            function(item) {
+
+                const li =
+                    document.createElement("li");
+
+                li.textContent = item;
+
+                dietList.appendChild(li);
+
+            }
+        );
+
+
+        // ----------------------------------------------------
+        // إنشاء قائمة النشاط البدني
+        // ----------------------------------------------------
+
+        exerciseList.innerHTML = "";
+
+        data.recommendations.exercise.forEach(
+            function(item) {
+
+                const li =
+                    document.createElement("li");
+
+                li.textContent = item;
+
+                exerciseList.appendChild(li);
+
+            }
+        );
+
+
+        // ----------------------------------------------------
+        // إظهار النتيجة
+        // ----------------------------------------------------
+
+        resultCard.style.display = "block";
+
+
+        // ----------------------------------------------------
+        // التمرير للنتيجة
+        // ----------------------------------------------------
+
+        resultCard.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }
+
+</script>
+
+</body>
+</html>
